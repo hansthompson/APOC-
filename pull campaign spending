@@ -1,4 +1,3 @@
-##
 
 require(httr)
 require(XML)
@@ -11,8 +10,15 @@ resXML <- htmlParse(content(res, as = "text"))
 tables <- readHTMLTable(resXML)
 length(tables)
 
-## First table is a mash of expenses and headers.
-tables[[1]]
+expenditures <- tables[[1]][-c(1:14),]
+colnames(expenditures)[1]  <- "test"
+colnames(expenditures)[1] <- as.character(tables[[1]][14,][1])
 
-## Second table is unoranized finance summary. 
-tables[[2]]
+splitRows <- which(tables[[1]][,5] == "Amount")
+stopExpenses <- which(tables[[1]][,5] == "Balance Remaining")
+Income <- tables[[1]][(splitRows[1]+1):(splitRows[2]-2),-6]
+Expenses <- tables[[1]][(splitRows[2]+1):(stopExpenses-1),]
+colnames(Income) <- c("Date", "Payment Method", "Contributor", "Details", "Amount")
+
+strsplit(as.character(Income[,3]), "/r/n")[[1]]
+
