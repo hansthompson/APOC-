@@ -1,0 +1,18 @@
+##
+
+require(httr)
+require(XML)
+
+basePage <- "https://aws.state.ak.us"
+h <- handle(basePage)
+GET(handle = h)
+res <- GET(handle = h, path = "/ApocReports/CampaignDisclosure/View.aspx?ID=3402")
+resXML <- htmlParse(content(res, as = "text"))
+tables <- readHTMLTable(resXML)
+length(tables)
+
+## First table is a mash of expenses and headers.
+tables[[1]]
+
+## Second table is unoranized finance summary. 
+tables[[2]]
