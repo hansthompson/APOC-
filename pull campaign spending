@@ -1,6 +1,7 @@
 
 require(httr)
 require(XML)
+require(stringr)
 
 basePage <- "https://aws.state.ak.us"
 h <- handle(basePage)
@@ -17,8 +18,24 @@ colnames(expenditures)[1] <- as.character(tables[[1]][14,][1])
 splitRows <- which(tables[[1]][,5] == "Amount")
 stopExpenses <- which(tables[[1]][,5] == "Balance Remaining")
 Income <- tables[[1]][(splitRows[1]+1):(splitRows[2]-2),-6]
-Expenses <- tables[[1]][(splitRows[2]+1):(stopExpenses-1),]
+Expenses <- tables[[1]][(splitRows[2]+1):(stopExpenses-2),]
 colnames(Income) <- c("Date", "Payment Method", "Contributor", "Details", "Amount")
 
-strsplit(as.character(Income[,3]), "/r/n")[[1]]
+Name   <- str_trim(str_split_fixed(as.character(Income[,3]), "\r\n", n= 2)[,1])
+Adress <- str_trim(str_split_fixed(as.character(Income[,3]), "\r\n", n= 2)[,2])
 
+Occupation <- str_trim(gsub("Occupation:Ã‚Â", "", str_split_fixed(as.character(Income[,4]), "\r\n", n= 2)[,1]))
+Employer   <- str_trim(gsub("Employer:Ã‚Â", "",   str_split_fixed(as.character(Income[,4]), "\r\n", n= 2)[,2]))
+Amount     <- as.numeric(gsub(",","",(gsub("\\$","",Income[,5]))))
+Payment_Method <- gsub("Ã‚Â","",Income[,2])
+IncomeDF <- data.frame(Date = Income[,1], Payment_Method, Name, Adress, Occupation, Employer, Amount)
+
+Expenses[,1]
+Payment_Method <- gsub("Ã‚Â", "", Expenses[,2])
+Vendor_Name    <- str_trim(str_split_fixed(as.character(Expenses[,3]), "\r\n", n= 2)[,1])
+Vendor_Adress  <- str_trim(str_split_fixed(as.character(Expenses[,3]), "\r\n", n= 2)[,2])
+Purpose <- Expenses[,4]
+Amount     <- as.numeric(gsub(",","",(gsub("\\$","",Expenses[,5]))))
+
+
+ExpensesDF <- data.frame(Date = Expenses[,1], Payment_Method, Vendor_Name, Vendor_Adress, Purpose, Amount)
