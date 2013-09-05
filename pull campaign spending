@@ -39,3 +39,15 @@ Amount     <- as.numeric(gsub(",","",(gsub("\\$","",Expenses[,5]))))
 
 
 ExpensesDF <- data.frame(Date = Expenses[,1], Payment_Method, Vendor_Name, Vendor_Adress, Purpose, Amount)
+
+firstname <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[2]])
+firstname <- str_trim(str_split_fixed(firstname,":", 2)[,2])
+
+middlename <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[3]])
+middlename <- str_trim(str_split_fixed(middlename ,":", 2)[,2])
+
+lastname <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[4]])
+lastname <- str_trim(str_split_fixed(lastname ,":", 2)[,2])
+
+fullname <- paste(firstname, middlename, lastname)
+
