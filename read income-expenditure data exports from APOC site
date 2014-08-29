@@ -1,0 +1,24 @@
+library(dplyr)
+
+files <- list.files(getwd(), pattern = ".csv", row.names = FALSE)
+
+all_data <- data.frame()
+
+for(i in seq(files)) {
+
+dat <- read.csv(files[i])
+
+all_data <- rbind(all_data , dat)
+}
+
+head(all_data)
+#clean headers 
+colnames(all_data) <- c(colnames(all_data)[2:29],"")
+#remove columns
+all_data<- all_data[,c(1:15,18:20)]
+
+
+
+gov_data <- all_data
+
+save(gov_data, file = "gov_data.rda")

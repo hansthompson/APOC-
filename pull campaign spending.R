@@ -1,0 +1,69 @@
+
+require(httr)
+require(XML)
+require(stringr)
+
+basePage <- "https://aws.state.ak.us"
+h <- handle(basePage)
+GET(handle = h)
+res <- GET(handle = h, path = "/ApocReports/CampaignDisclosure/View.aspx?ID=3402")
+resXML <- htmlParse(content(res, as = "text"))
+tables <- readHTMLTable(resXML)
+length(tables)
+
+expenditures <- tables[[1]][-c(1:14),]
+colnames(expenditures)[1]  <- "test"
+colnames(expenditures)[1] <- as.character(tables[[1]][14,][1])
+
+splitRows <- which(tables[[1]][,5] == "Amount")
+stopExpenses <- which(tables[[1]][,5] == "Balance Remaining")
+Income <- tables[[1]][(splitRows[1]+1):(splitRows[2]-2),-6]
+Expenses <- tables[[1]][(splitRows[2]+1):(stopExpenses-2),]
+colnames(Income) <- c("Date", "Payment Method", "Contributor", "Details", "Amount")
+
+Name   <- str_trim(str_split_fixed(as.character(Income[,3]), "\r\n", n= 2)[,1])
+Adress <- str_trim(str_split_fixed(as.character(Income[,3]), "\r\n", n= 2)[,2])
+
+Occupation <- str_trim(gsub("Occupation:Ã‚Â", "", str_split_fixed(as.character(Income[,4]), "\r\n", n= 2)[,1]))
+Employer   <- str_trim(gsub("Employer:Ã‚Â", "",   str_split_fixed(as.character(Income[,4]), "\r\n", n= 2)[,2]))
+Amount     <- as.numeric(gsub(",","",(gsub("\\$","",Income[,5]))))
+Payment_Method <- gsub("Ã‚Â","",Income[,2])
+IncomeDF <- data.frame(Date = Income[,1], Payment_Method, Name, Adress, Occupation, Employer, Amount)
+
+Payment_Method <- gsub("Ã‚Â", "", Expenses[,2])
+Vendor_Name    <- str_trim(str_split_fixed(as.character(Expenses[,3]), "\r\n", n= 2)[,1])
+Vendor_Adress  <- str_trim(str_split_fixed(as.character(Expenses[,3]), "\r\n", n= 2)[,2])
+Purpose <- Expenses[,4]
+Amount     <- as.numeric(gsub(",","",(gsub("\\$","",Expenses[,5]))))
+
+
+ExpensesDF <- data.frame(Date = Expenses[,1], Payment_Method, Vendor_Name, Vendor_Adress, Purpose, Amount)
+
+firstname <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[2]])
+firstname <- str_trim(str_split_fixed(firstname,":", 2)[,2])
+middlename <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[3]])
+middlename <- str_trim(str_split_fixed(middlename ,":", 2)[,2])
+lastname <- xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[4]])
+lastname <- str_trim(str_split_fixed(lastname ,":", 2)[,2])
+
+fullname <- paste(firstname, middlename, lastname)
+
+submissionDate <- str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[1]]) ,":", 2)[,2])
+Filer    <- str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[5]]) ,":", 2)[,2])
+reportTitle <- str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[6]]) ,":", 2)[,2])
+Address    <- paste(str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[8]]) ,":", 2)[,2]),
+                str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[9]]) ,":", 2)[,2]))
+Election   <-  str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[11]]) ,":", 2)[,2])
+reportType <- str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[12]]) ,":", 2)[,2])
+reportingPeriodStart <- str_split_fixed(str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[13]]) ,":", 2)[,2])," ", 5)[,2]
+reportingPeriodEnd <- str_split_fixed(str_trim(str_split_fixed(xmlValue(xpathSApply(resXML, "//*[contains(@class, 'SummaryRow')]")[[13]]) ,":", 2)[,2])," ", 5)[,4]
+
+
+meta <- list(name = fullname, submission_date = submissionDate,filer =  Filer,report_title = reportTitle,address =  Address,
+     election = Election, report_type = reportType, report_start = reportingPeriodStart, report_end = reportingPeriodEnd)
+
+
+
+
+list(meta = meta, Income = IncomeDF, Expenses = ExpensesDF)
+
