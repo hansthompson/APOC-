@@ -54,8 +54,7 @@ gov_data <- all_data
 gov_data$Date <- mdy(gov_data$Date)
 gov_data$full_name <- factor(gov_data$full_name)
 
-dput(levels(gov_data$Group.Candidate.Name))
-c("AK Sea Pilot PAC Fund", "Alaska Democratic Labor Caucus", 
+PACs <- c("AK Sea Pilot PAC Fund", "Alaska Democratic Labor Caucus", 
   "Alaska Libertarian Party", "Alaska Women for Political Action ", 
   "Alaska Young Democrats", "ATATruckPAC", "District 1 Republicans", 
   "District One Democrats", "DNC Services Corporation", "First City Republican Women's Club", 
@@ -144,7 +143,18 @@ c("AK Sea Pilot PAC Fund", "Alaska Democratic Labor Caucus",
   "The Accountability Project", 
   "Valley Republican Women",  "We Are Alaska - No on One", "Yes On Prop One"
 )
+PACs <- gsub("\\)","", PACs)
+PACs <- gsub("\\(","-", PACs)
 
 
+pac_vector <- c()
+##takes a long time.  Need a better method
+for(i in seq(dim(gov_data)[1])) {
+    
+pac_vector <- c(pac_vector, str_detect(gov_data$Group.Candidate.Name[i], PACs))
+                
+}
+    
+gov_data <- cbind(gov_data, pac_vector)
 
 save(gov_data, file = "gov_data.rda")
