@@ -147,14 +147,8 @@ PACs <- gsub("\\)","", PACs)
 PACs <- gsub("\\(","-", PACs)
 
 
-pac_vector <- c()
-##takes a long time.  Need a better method
-for(i in seq(dim(gov_data)[1])) {
-    
-pac_vector <- c(pac_vector, str_detect(gov_data$Group.Candidate.Name[i], PACs))
-                
-}
-    
+pac_vector <- gov_data$Group.Candidate.Name %in% PACs
+
 gov_data <- cbind(gov_data, pac_vector)
 
 save(gov_data, file = "gov_data.rda")
